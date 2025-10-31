@@ -4,6 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GPS Watermark Batch Processor - Minimalist</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Professional browser-based tool for batch processing images with GPS watermarks and location data overlays. No installation required, 100% client-side processing.">
+    <meta name="keywords" content="GPS watermark, batch image processing, photo watermark, location overlay, GPS data, image processor">
+    <meta name="author" content="GPS Watermark Processor">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="GPS Watermark Batch Processor">
+    <meta property="og:description" content="Professional browser-based tool for batch processing images with GPS watermarks and location data overlays.">
+    <meta property="og:site_name" content="GPS Watermark Processor">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="GPS Watermark Batch Processor">
+    <meta name="twitter:description" content="Professional browser-based tool for batch processing images with GPS watermarks and location data overlays.">
+
+    <!-- Favicon (Data URI - simple icon) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>📍</text></svg>">
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#4299e1">
+
+    <!-- External Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
@@ -457,9 +482,39 @@
                 justify-content: center;
             }
         }
+
+        /* Browser compatibility warning */
+        .browser-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #fed7d7;
+            color: #742a2a;
+            padding: 16px 20px;
+            text-align: center;
+            font-weight: 600;
+            z-index: 10000;
+            border-bottom: 3px solid #fc8181;
+            display: none;
+        }
+
+        .browser-warning.show {
+            display: block;
+        }
+
+        .browser-warning a {
+            color: #742a2a;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
+    <!-- Browser Compatibility Warning -->
+    <div class="browser-warning" id="browserWarning">
+        ⚠️ Your browser may not support all features required by this application.
+        Please use a modern browser like Chrome 90+, Firefox 88+, Safari 14+, or Edge 90+.
+    </div>
     <div class="container">
         <div class="header">
             <h1>GPS Watermark Processor</h1>
@@ -603,6 +658,23 @@
     </div>
 
     <script>
+        // Browser compatibility check
+        (function checkBrowserCompatibility() {
+            const requiredFeatures = [
+                typeof FileReader !== 'undefined',
+                typeof Blob !== 'undefined',
+                typeof Promise !== 'undefined',
+                typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function',
+                document.createElement('canvas').getContext !== undefined
+            ];
+
+            const isCompatible = requiredFeatures.every(feature => feature);
+
+            if (!isCompatible) {
+                document.getElementById('browserWarning').classList.add('show');
+            }
+        })();
+
         let excelData = null;
         let imageFiles = [];
         let overlayFile = null;
