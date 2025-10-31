@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPS Watermark Batch Processor - Minimalist</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: #2d3748;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            font-size: 1em;
+            color: #718096;
+            font-weight: 400;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: #4299e1;
+            color: white;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            background: #f7fafc;
+        }
+
+        .upload-area:hover {
+            border-color: #4299e1;
+            background: #ebf8ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #4299e1;
+            background: #bee3f8;
+            transform: scale(1.01);
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 12px;
+            opacity: 0.6;
+        }
+
+        .upload-area p {
+            color: #4a5568;
+            line-height: 1.6;
+        }
+
+        .upload-area p strong {
+            color: #2d3748;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+            display: inline-block;
+            padding: 12px 32px;
+            background: #4299e1;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 16px;
+            font-weight: 500;
+            font-size: 15px;
+        }
+
+        .file-label:hover {
+            background: #3182ce;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
+        }
+
+        .file-info {
+            margin-top: 16px;
+            padding: 16px;
+            background: #f0fdf4;
+            border-radius: 8px;
+            display: none;
+            border-left: 3px solid #48bb78;
+            color: #276749;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .setting-item {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+
+        .setting-item:hover {
+            border-color: #cbd5e0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .setting-item label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #2d3748;
+            font-size: 14px;
+        }
+
+        .setting-item input,
+        .setting-item select,
+        .setting-item textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s;
+            background: white;
+            color: #2d3748;
+        }
+
+        .setting-item input:focus,
+        .setting-item select:focus,
+        .setting-item textarea:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+
+        .setting-item textarea {
+            min-height: 80px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .setting-item small {
+            display: block;
+            margin-top: 6px;
+            color: #718096;
+            font-size: 12px;
+        }
+
+        .custom-naming-input {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .custom-naming-input.show {
+            display: block;
+        }
+
+        .process-btn {
+            width: 100%;
+            padding: 16px;
+            background: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 40px;
+        }
+
+        .process-btn:hover:not(:disabled) {
+            background: #3182ce;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(66, 153, 225, 0.3);
+        }
+
+        .process-btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            color: #a0aec0;
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 32px;
+        }
+
+        .progress-container.show {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #4299e1;
+            transition: width 0.3s;
+            border-radius: 4px;
+        }
+
+        .progress-text {
+            margin-top: 12px;
+            text-align: center;
+            color: #718096;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .progress-percent {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 24px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .preview-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+
+        .preview-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .preview-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+            color: white;
+            padding: 12px 8px 8px;
+            font-size: 12px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .alert {
+            padding: 16px 20px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            color: #276749;
+            border-left: 4px solid #48bb78;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 24px;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 32px;
+            background: #48bb78;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .download-btn:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+        }
+
+        .download-btn.ppt {
+            background: #ed8936;
+        }
+
+        .download-btn.ppt:hover {
+            background: #dd6b20;
+            box-shadow: 0 4px 12px rgba(237, 137, 54, 0.3);
+        }
+
+        .crop-mode-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .crop-option {
+            padding: 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .crop-option:hover {
+            border-color: #4299e1;
+            background: #ebf8ff;
+        }
+
+        .crop-option.selected {
+            border-color: #4299e1;
+            background: #ebf8ff;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+
+        .crop-option input[type="radio"] {
+            display: none;
+        }
+
+        .crop-option strong {
+            display: block;
+            color: #2d3748;
+            margin-bottom: 4px;
+        }
+
+        .crop-option small {
+            color: #718096;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 10px;
+            }
+
+            .content {
+                padding: 24px;
+            }
+
+            .header {
+                padding: 32px 24px;
+            }
+
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .download-buttons {
+                flex-direction: column;
+            }
+
+            .download-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>GPS Watermark Processor</h1>
+            <p>Professional batch watermarking with GPS data overlay</p>
+        </div>
+
+        <div class="content">
+            <!-- Excel Upload Section -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="section-number">1</span>
+                    Upload Excel File
+                </div>
+                <div class="upload-area" id="excelUploadArea">
+                    <div class="upload-icon">📄</div>
+                    <p><strong>Drop your Excel file here</strong></p>
+                    <p style="margin-top: 8px; color: #718096;">or click to browse</p>
+                    <label for="excelFile" class="file-label">Choose File</label>
+                    <input type="file" id="excelFile" accept=".xlsx,.xls">
+                </div>
+                <div class="file-info" id="excelInfo"></div>
+            </div>
+
+            <!-- Images Upload Section -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="section-number">2</span>
+                    Upload Images
+                </div>
+                <div class="upload-area" id="imagesUploadArea">
+                    <div class="upload-icon">🖼️</div>
+                    <p><strong>Drop multiple images here</strong></p>
+                    <p style="margin-top: 8px; color: #718096;">or click to browse</p>
+                    <label for="imageFiles" class="file-label">Choose Images</label>
+                    <input type="file" id="imageFiles" accept="image/*" multiple>
+                </div>
+                <div class="file-info" id="imagesInfo"></div>
+                <div class="preview-grid" id="imagesPreview"></div>
+            </div>
+
+            <!-- Map Overlay Upload Section -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="section-number">3</span>
+                    Upload Map Overlay
+                </div>
+                <div class="upload-area" id="overlayUploadArea">
+                    <div class="upload-icon">🗺️</div>
+                    <p><strong>Drop map overlay image here</strong></p>
+                    <p style="margin-top: 8px; color: #718096;">or click to browse</p>
+                    <label for="overlayFile" class="file-label">Choose Overlay</label>
+                    <input type="file" id="overlayFile" accept="image/*">
+                </div>
+                <div class="file-info" id="overlayInfo"></div>
+                <div class="preview-grid" id="overlayPreview"></div>
+            </div>
+
+            <!-- Settings Section -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="section-number">4</span>
+                    Configure Settings
+                </div>
+                <div class="settings-grid">
+                    <div class="setting-item">
+                        <label>Output Image Size</label>
+                        <select id="outputSize">
+                            <option value="1280x960" selected>1280 × 960 (Standard)</option>
+                            <option value="1920x1080">1920 × 1080 (Full HD)</option>
+                            <option value="1920x1440">1920 × 1440 (4:3)</option>
+                            <option value="original">Keep Original Size</option>
+                        </select>
+                        <div class="crop-mode-selector" id="cropModeSelector">
+                            <label class="crop-option selected">
+                                <input type="radio" name="cropMode" value="cover" checked>
+                                <strong>Cover</strong>
+                                <small>Fill frame, crop excess</small>
+                            </label>
+                            <label class="crop-option">
+                                <input type="radio" name="cropMode" value="contain">
+                                <strong>Contain</strong>
+                                <small>Fit all, add bars</small>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="setting-item">
+                        <label>Image Quality</label>
+                        <input type="number" id="imageQuality" value="90" min="1" max="100">
+                        <small>Higher value = better quality, larger file size</small>
+                    </div>
+                    <div class="setting-item">
+                        <label>File Naming Pattern</label>
+                        <select id="namingPattern">
+                            <option value="IMG_">IMG_001, IMG_002...</option>
+                            <option value="GPS_">GPS_001, GPS_002...</option>
+                            <option value="Photo_">Photo_001, Photo_002...</option>
+                            <option value="date">Date Format (YYYYMMDD_HHMMSS)</option>
+                            <option value="custom">Custom Pattern</option>
+                        </select>
+                        <div class="custom-naming-input" id="customNamingInput">
+                            <input type="text" id="customPrefix" placeholder="e.g., MyPhoto_">
+                            <small>Will create: YourPrefix_001, YourPrefix_002...</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Static Text Configuration -->
+                <div class="settings-grid" style="margin-top: 20px;">
+                    <div class="setting-item">
+                        <label>Location Text</label>
+                        <input type="text" id="locationText" value="Gurugram, Haryana, India" placeholder="City, State, Country">
+                    </div>
+                    <div class="setting-item">
+                        <label>Address Line</label>
+                        <input type="text" id="addressText" value="48, Sohna - Gurgaon Rd, Dhani, Sector 72, Gurugram," placeholder="Street Address">
+                    </div>
+                    <div class="setting-item">
+                        <label>Coordinates</label>
+                        <input type="text" id="coordinatesText" value="Lat 28.411288° Long 77.041804°" placeholder="Lat XX.XXXX° Long YY.YYYY°">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Process Button -->
+            <button class="process-btn" id="processBtn" disabled>
+                Process Images
+            </button>
+
+            <!-- Progress Section -->
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-percent" id="progressPercent">0%</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Initializing...</div>
+            </div>
+
+            <!-- Result Section -->
+            <div id="resultSection"></div>
+        </div>
+    </div>
+
+    <script>
+        let excelData = null;
+        let imageFiles = [];
+        let overlayFile = null;
+        let processedImages = [];
+
+        // Crop mode selector
+        document.querySelectorAll('.crop-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.crop-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                this.querySelector('input').checked = true;
+            });
+        });
+
+        // Custom naming input toggle
+        document.getElementById('namingPattern').addEventListener('change', function() {
+            const customInput = document.getElementById('customNamingInput');
+            if (this.value === 'custom') {
+                customInput.classList.add('show');
+            } else {
+                customInput.classList.remove('show');
+            }
+        });
+
+        // Drag and drop handlers
+        function setupDragDrop(areaId, fileInputId) {
+            const area = document.getElementById(areaId);
+            const input = document.getElementById(fileInputId);
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                area.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                area.addEventListener(eventName, () => area.classList.add('dragover'), false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                area.addEventListener(eventName, () => area.classList.remove('dragover'), false);
+            });
+
+            area.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                input.files = files;
+                input.dispatchEvent(new Event('change'));
+            });
+
+            area.addEventListener('click', () => input.click());
+        }
+
+        setupDragDrop('excelUploadArea', 'excelFile');
+        setupDragDrop('imagesUploadArea', 'imageFiles');
+        setupDragDrop('overlayUploadArea', 'overlayFile');
+
+        // Excel file handler
+        document.getElementById('excelFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    
+                    excelData = jsonData;
+                    
+                    document.getElementById('excelInfo').innerHTML = `
+                        <strong>✓ Loaded:</strong> ${file.name} · ${jsonData.length} entries
+                    `;
+                    document.getElementById('excelInfo').classList.add('show');
+                    checkReadyToProcess();
+                } catch (error) {
+                    alert('Error reading Excel file: ' + error.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // Images file handler
+        document.getElementById('imageFiles').addEventListener('change', function(e) {
+            imageFiles = Array.from(e.target.files);
+            
+            document.getElementById('imagesInfo').innerHTML = `
+                <strong>✓ Loaded:</strong> ${imageFiles.length} images
+            `;
+            document.getElementById('imagesInfo').classList.add('show');
+
+            // Show preview
+            const previewContainer = document.getElementById('imagesPreview');
+            previewContainer.innerHTML = '';
+            
+            imageFiles.slice(0, 10).forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const div = document.createElement('div');
+                    div.className = 'preview-item';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" alt="Image ${index + 1}">
+                        <div class="preview-label">${file.name}</div>
+                    `;
+                    previewContainer.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+
+            if (imageFiles.length > 10) {
+                const moreDiv = document.createElement('div');
+                moreDiv.className = 'preview-item';
+                moreDiv.innerHTML = `
+                    <div style="height: 150px; display: flex; align-items: center; justify-content: center; background: #f7fafc; color: #718096; font-weight: 600;">
+                        +${imageFiles.length - 10} more
+                    </div>
+                `;
+                previewContainer.appendChild(moreDiv);
+            }
+
+            checkReadyToProcess();
+        });
+
+        // Overlay file handler
+        document.getElementById('overlayFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            overlayFile = file;
+            
+            document.getElementById('overlayInfo').innerHTML = `
+                <strong>✓ Loaded:</strong> ${file.name}
+            `;
+            document.getElementById('overlayInfo').classList.add('show');
+
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('overlayPreview').innerHTML = `
+                    <div class="preview-item">
+                        <img src="${e.target.result}" alt="Map Overlay">
+                        <div class="preview-label">Map Overlay</div>
+                    </div>
+                `;
+            };
+            reader.readAsDataURL(file);
+
+            checkReadyToProcess();
+        });
+
+        function checkReadyToProcess() {
+            const btn = document.getElementById('processBtn');
+            if (excelData && imageFiles.length > 0 && overlayFile) {
+                btn.disabled = false;
+                btn.textContent = `Process ${imageFiles.length} Images`;
+            }
+        }
+
+        // Process button handler
+        document.getElementById('processBtn').addEventListener('click', async function() {
+            this.disabled = true;
+            document.getElementById('progressContainer').classList.add('show');
+            document.getElementById('resultSection').innerHTML = '';
+
+            try {
+                await processImages();
+            } catch (error) {
+                alert('Error processing images: ' + error.message);
+                console.error(error);
+            }
+
+            this.disabled = false;
+        });
+
+        async function processImages() {
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const progressPercent = document.getElementById('progressPercent');
+            const outputSize = document.getElementById('outputSize').value;
+            const quality = parseInt(document.getElementById('imageQuality').value) / 100;
+            const namingPattern = document.getElementById('namingPattern').value;
+            const customPrefix = document.getElementById('customPrefix').value;
+            const locationText = document.getElementById('locationText').value;
+            const addressText = document.getElementById('addressText').value;
+            const coordinatesText = document.getElementById('coordinatesText').value;
+            const cropMode = document.querySelector('input[name="cropMode"]:checked').value;
+
+            const zip = new JSZip();
+            const processedFolder = zip.folder('processed_images');
+            processedImages = [];
+
+            // Load overlay image
+            progressText.textContent = 'Loading map overlay...';
+            const overlayImage = await loadImage(overlayFile);
+
+            const totalImages = Math.min(imageFiles.length, excelData.length);
+
+            for (let i = 0; i < totalImages; i++) {
+                const progress = ((i + 1) / totalImages * 100).toFixed(0);
+                progressFill.style.width = progress + '%';
+                progressPercent.textContent = progress + '%';
+                progressText.textContent = `Processing image ${i + 1} of ${totalImages}...`;
+
+                const imageFile = imageFiles[i];
+                const excelRow = excelData[i];
+
+                // Generate filename
+                let filename;
+                if (namingPattern === 'date') {
+                    const datetime = formatDateTimeForFilename(excelRow);
+                    filename = `${datetime}.jpg`;
+                } else if (namingPattern === 'custom') {
+                    const prefix = customPrefix || 'Image_';
+                    const paddedNum = String(i + 1).padStart(3, '0');
+                    filename = `${prefix}${paddedNum}.jpg`;
+                } else {
+                    const paddedNum = String(i + 1).padStart(3, '0');
+                    filename = `${namingPattern}${paddedNum}.jpg`;
+                }
+
+                // Load image
+                const img = await loadImage(imageFile);
+
+                // Create canvas
+                const canvas = document.createElement('canvas');
+                let width, height;
+                
+                if (outputSize === 'original') {
+                    width = img.width;
+                    height = img.height;
+                } else {
+                    [width, height] = outputSize.split('x').map(Number);
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+
+                // Fill with white background first
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, width, height);
+
+                // Draw resized image with proper cropping/fitting
+                if (cropMode === 'cover') {
+                    const imgAspect = img.width / img.height;
+                    const canvasAspect = width / height;
+                    
+                    let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
+                    
+                    if (imgAspect > canvasAspect) {
+                        drawHeight = height;
+                        drawWidth = img.width * (height / img.height);
+                        offsetX = (width - drawWidth) / 2;
+                    } else {
+                        drawWidth = width;
+                        drawHeight = img.height * (width / img.width);
+                        offsetY = (height - drawHeight) / 2;
+                    }
+                    
+                    ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+                } else {
+                    const imgAspect = img.width / img.height;
+                    const canvasAspect = width / height;
+                    
+                    let drawWidth, drawHeight, offsetX = 0, offsetY = 0;
+                    
+                    if (imgAspect > canvasAspect) {
+                        drawWidth = width;
+                        drawHeight = img.height * (width / img.width);
+                        offsetY = (height - drawHeight) / 2;
+                    } else {
+                        drawHeight = height;
+                        drawWidth = img.width * (height / img.height);
+                        offsetX = (width - drawWidth) / 2;
+                    }
+                    
+                    ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+                }
+
+                // Draw overlay
+                ctx.drawImage(overlayImage, 0, 0, width, height);
+
+                // Add text watermarks
+                const scale = width / 1280;
+                addWatermarkText(ctx, excelRow, scale, locationText, addressText, coordinatesText);
+
+                // Convert to blob
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+                processedFolder.file(filename, blob);
+
+                // Store for PPT export
+                const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                processedImages.push({
+                    filename: filename,
+                    dataUrl: dataUrl,
+                    datetime: formatDateTime(excelRow)
+                });
+            }
+
+            // Generate ZIP
+            progressText.textContent = 'Creating ZIP file...';
+            progressFill.style.width = '100%';
+            progressPercent.textContent = '100%';
+
+            const zipBlob = await zip.generateAsync({type: 'blob'});
+            const zipUrl = URL.createObjectURL(zipBlob);
+
+            // Show result
+            document.getElementById('resultSection').innerHTML = `
+                <div class="alert alert-success">
+                    <strong>✓ Success!</strong> Processed ${totalImages} images successfully
+                </div>
+                <div class="download-buttons">
+                    <a href="${zipUrl}" download="processed_images.zip" class="download-btn">
+                        📥 Download ZIP
+                    </a>
+                    <button onclick="exportToPPT()" class="download-btn ppt">
+                        📊 Download PowerPoint
+                    </button>
+                </div>
+            `;
+        }
+
+        async function exportToPPT() {
+            const progressText = document.getElementById('progressText');
+            progressText.textContent = 'Creating PowerPoint presentation...';
+
+            const pptx = new PptxGenJS();
+            
+            pptx.author = 'GPS Watermark Processor';
+            pptx.title = 'GPS Watermarked Images';
+            pptx.subject = 'Processed Images with GPS Data';
+
+            if (processedImages.length > 0) {
+                const firstImg = await getImageDimensions(processedImages[0].dataUrl);
+                const imgWidth = firstImg.width;
+                const imgHeight = firstImg.height;
+                
+                const maxWidth = 13.33;
+                const maxHeight = 7.5;
+                
+                const imgAspect = imgWidth / imgHeight;
+                let slideWidth, slideHeight;
+                
+                if (imgAspect >= maxWidth / maxHeight) {
+                    slideWidth = maxWidth;
+                    slideHeight = maxWidth / imgAspect;
+                } else {
+                    slideHeight = maxHeight;
+                    slideWidth = maxHeight * imgAspect;
+                }
+                
+                pptx.defineLayout({ name: 'CUSTOM', width: slideWidth, height: slideHeight });
+                pptx.layout = 'CUSTOM';
+            }
+
+            for (let i = 0; i < processedImages.length; i++) {
+                const img = processedImages[i];
+                const slide = pptx.addSlide();
+                
+                slide.addImage({
+                    data: img.dataUrl,
+                    x: 0,
+                    y: 0,
+                    w: '100%',
+                    h: '100%'
+                });
+            }
+
+            await pptx.writeFile({ fileName: 'GPS_Watermarked_Images.pptx' });
+            progressText.textContent = 'PowerPoint downloaded successfully!';
+        }
+
+        function getImageDimensions(dataUrl) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = function() {
+                    resolve({ width: this.width, height: this.height });
+                };
+                img.onerror = reject;
+                img.src = dataUrl;
+            });
+        }
+
+        function loadImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function addWatermarkText(ctx, excelRow, scale, locationText, addressText, coordinatesText) {
+            const datetime = formatDateTime(excelRow);
+
+            ctx.fillStyle = 'white';
+            ctx.textBaseline = 'top';
+
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+            ctx.shadowBlur = 4 * scale;
+            ctx.shadowOffsetX = 2 * scale;
+            ctx.shadowOffsetY = 2 * scale;
+
+            ctx.font = `bold ${23 * scale}px Arial`;
+            ctx.fillText('GPS Map Camera', 942 * scale, 680 * scale);
+
+            ctx.font = `${45 * scale}px Arial`;
+            ctx.fillText(locationText, 380 * scale, 755 * scale);
+
+            ctx.font = `${29 * scale}px Arial`;
+            ctx.fillText(addressText, 380 * scale, 810 * scale);
+            ctx.fillText(coordinatesText, 380 * scale, 850 * scale);
+            ctx.fillText(datetime, 380 * scale, 890 * scale);
+
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+        }
+
+        function formatDateTime(row) {
+            let dateStr = '';
+            let timeStr = '';
+
+            if (row.datetime) {
+                const date = excelDateToJSDate(row.datetime);
+                dateStr = date.toLocaleDateString('en-GB', { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: 'numeric' 
+                }).split('/').join('/');
+            }
+
+            if (row.Time) {
+                const time = excelDateToJSDate(row.Time);
+                timeStr = time.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                });
+            }
+
+            return `${dateStr} ${timeStr} GMT +05:30`;
+        }
+
+        function formatDateTimeForFilename(row) {
+            const date = excelDateToJSDate(row.datetime);
+            const time = excelDateToJSDate(row.Time);
+            
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hour = String(time.getHours()).padStart(2, '0');
+            const minute = String(time.getMinutes()).padStart(2, '0');
+            const second = String(time.getSeconds()).padStart(2, '0');
+            
+            return `${year}${month}${day}_${hour}${minute}${second}`;
+        }
+
+        function excelDateToJSDate(excelDate) {
+            if (typeof excelDate === 'number') {
+                return new Date((excelDate - 25569) * 86400 * 1000);
+            } else if (excelDate instanceof Date) {
+                return excelDate;
+            }
+            return new Date();
+        }
+    </script>
+</body>
+</html>
