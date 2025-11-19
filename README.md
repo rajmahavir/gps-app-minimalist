@@ -2,6 +2,12 @@
 
 A professional, browser-based tool for batch processing images with GPS watermarks and location data overlays.
 
+## 🚀 Live Demo
+
+**Try it now:** [https://rajmahavir.github.io/gps-app-minimalist/gps-app-minimalist.html](https://rajmahavir.github.io/gps-app-minimalist/gps-app-minimalist.html)
+
+No installation required - runs entirely in your browser!
+
 ## Features
 
 - **Batch Processing**: Process multiple images simultaneously with GPS data from Excel
@@ -16,8 +22,9 @@ A professional, browser-based tool for batch processing images with GPS watermar
 ### 1. Prepare Your Files
 
 **Excel File Requirements:**
-- Should contain columns: `datetime` and `Time`
-- DateTime values should be in Excel date format
+- Should contain columns: `Date` and `Time`
+- Date values should be in Excel date format
+- Time values should be in Excel time format
 - One row per image to be processed
 
 **Images:**
@@ -131,7 +138,7 @@ gps-app-minimalist/
 ## Troubleshooting
 
 ### Images not processing?
-- Ensure Excel file has `datetime` and `Time` columns
+- Ensure Excel file has `Date` and `Time` columns
 - Check that image files are valid image formats
 - Verify browser console for specific errors
 
