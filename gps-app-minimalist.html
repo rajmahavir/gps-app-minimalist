@@ -1146,7 +1146,16 @@
 
         function excelDateToJSDate(excelDate) {
             if (typeof excelDate === 'number') {
-                return new Date((excelDate - 25569) * 86400 * 1000);
+                // Check if this is a time-only value (decimal between 0 and 1)
+                // Time values in Excel are stored as fractions of a day
+                if (excelDate >= 0 && excelDate < 1) {
+                    // For time-only values, don't apply epoch offset
+                    // Just convert the fraction of day to milliseconds
+                    return new Date(excelDate * 86400 * 1000);
+                } else {
+                    // For date or datetime values, apply the Excel epoch offset
+                    return new Date((excelDate - 25569) * 86400 * 1000);
+                }
             } else if (excelDate instanceof Date) {
                 return excelDate;
             }
