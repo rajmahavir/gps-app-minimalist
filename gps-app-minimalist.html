@@ -1109,12 +1109,12 @@
             let dateStr = '';
             let timeStr = '';
 
-            if (row.datetime) {
-                const date = excelDateToJSDate(row.datetime);
-                dateStr = date.toLocaleDateString('en-GB', { 
-                    day: '2-digit', 
-                    month: '2-digit', 
-                    year: 'numeric' 
+            if (row.Date) {
+                const date = excelDateToJSDate(row.Date);
+                dateStr = date.toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
                 }).split('/').join('/');
             }
 
@@ -1131,7 +1131,7 @@
         }
 
         function formatDateTimeForFilename(row) {
-            const date = excelDateToJSDate(row.datetime);
+            const date = excelDateToJSDate(row.Date);
             const time = excelDateToJSDate(row.Time);
             
             const year = date.getFullYear();
